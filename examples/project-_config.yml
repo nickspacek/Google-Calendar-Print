@@ -1,4 +1,5 @@
 title: PROJECT_TITLE
+git_base: http://github.com/USERNAME/PROJECT
 analytics_id: UA-10529487-2
 post_defaults:
   layout: post
