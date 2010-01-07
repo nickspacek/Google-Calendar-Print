@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        {% if page.title %}
+        {{ page.title }} - {{ site.title }}
+        {% else %}
+        {{ site.title }}
+        {% endif %}
+    </title>
+    
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.0.0/build/cssreset/reset-min.css">
+    <link rel="stylesheet" href="css/screen.css" type="text/css" media="screen" charset="utf-8" />
+</head>
+
+<body>
+
+<header>
+    <nav>
+        <a href="/index.html" title="Home">Home</a>
+    </nav>
+</header>
+
+<section id="content">
+{{ content }}
+</section>
+
+{% include sidebar.html %}
+
+<footer>
+</footer>
+
+{% include analytics.html %}
+
+</body>
+
+</html>

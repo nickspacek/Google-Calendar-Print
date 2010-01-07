@@ -1,0 +1,12 @@
+<nav>
+    <h1>Posts</h1>
+    <ol>
+        {% for post in site.posts %}
+        <li>
+            <a href="{{ post.url }}" title="{{ post.title }}">
+                {{ post.title }}
+            </a>
+        </li>
+        {% endfor %}
+    </ol>
+</nav>
