@@ -1,4 +1,5 @@
 title: Google Calendar Print
 git_base: http://github.com/nickspacek/Google-Calendar-Print
+analytics_id: UA-10529487-2
 post_defaults:
   layout: post
