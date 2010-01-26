@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<Module>
+ <ModulePrefs title="Google Calendar Advanced Printing"
+              author="Nick Spacek nick.spacek@gmail.com"
+              height="385">
+  <OAuth>
+    <Service name="google">
+      <Access url="https://www.google.com/accounts/OAuthGetAccessToken" method="GET" /> 
+      <Request url="https://www.google.com/accounts/OAuthGetRequestToken?scope=http://www.google.com/calendar/feeds/" method="GET" /> 
+      <Authorization url="https://www.google.com/accounts/OAuthAuthorizeToken?oauth_callback=http://oauth.gmodules.com/gadgets/oauthcallback" /> 
+    </Service>
+  </OAuth>
+  </ModulePrefs>
+  <Content type="html">
+  <![CDATA[ 
+    <html>
+      <head> 
+        <script src="http://www.google.com/jsapi"></script>
+        <script type="text/javascript" src="http://jquery.com/src/jquery-latest.js"></script>
+        <script type="text/javascript" src="http://gdata-samples.googlecode.com/svn/trunk/gadgets/blogger/popup.js"></script>
+        <style type="text/css">
+          #main {
+            font-size: 10px;
+          }
+          
+          #main ul, #mail ol {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+          }
+        </style>
+      </head>
+      <body>      
+        <div id="errors" style="display: none"></div>
+       
+        <div id="main" style="display:none">
+          <div id="printdialog">
+            <form action="http://www.google.com/calendar/printable">
+              <input id="startdate" class="hasDatepicker" size="10">
+              <input id="enddate" class="hasDatepicker" size="10">
+
+              <ul class="calendars"></ul>
+
+              <div>
+                <label for="pgsz">Page Size</label>
+                <select id="pgsz" name="pgsz">
+                  <option value="letter">Letter</option>
+                  <option value="legal">Legal</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="po">Page Size</label>
+                <select id="po" name="po">
+                  <option value="AUTO">Auto</option>
+                  <option value="PORTRAIT">Portrait</option>
+                  <option value="LANDSCAPE">Landscape</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="pfs">Font Size</label>
+                <select id="pfs" name="pfs">
+                  <option value="SMALLEST">Smallest</option>
+                  <option value="SMALLER">Smaller</option>
+                  <option value="SMALL">Small</option>
+                  <option value="NORMAL" selected="selected">Normal</option>
+                  <option value="BIG">Big</option>
+                  <option value="BIGGER">Bigger</option>
+                  <option value="BIGGEST">Biggest</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="mode">Display Mode</label>
+                <select id="mode" name="mode">
+                  <option value="MONTH">Month</option>
+                  <option value="WEEK">Week</option>
+                  <option value="AGENDA">Agenda</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="wkst">Week Start</label>
+                <select id="wkst" name="wkst">
+                  <option value="1">Sunday</option>
+                  <option value="2">Monday</option>
+                  <option value="3">Tuesday</option>
+                  <option value="4">Wednesday</option>
+                  <option value="5">Thursday</option>
+                  <option value="6">Friday</option>
+                  <option value="7">Saturday</option>
+                </select>
+              </div>
+
+              <div>
+                <input id="psdec" type="checkbox" name="psdec" checked="checked" value="true">
+                <label for="psdec">Show declined?</label>
+              </div>
+
+              <div>
+                <label for="pft">Format</label>
+                <select id="pft" name="pft">
+                  <option value="pdf">pdf</option>
+                  <option value="png">png</option>
+                </select>
+              </div>
+              
+              <button class="generate">Generate URL</button>
+              <p class="error" style="display:none">
+                Please make sure you fill in the start and end date, and select at least one calendar.
+              </p>
+              <div class="urls" style="display:none">
+                <input type="text" class="url-input" readonly="readonly" />
+                <a class="url-link" href="#" target="_blank">Click to open</a>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div id="loading">
+          <h3>Loading...</h3>
+          <p><img src="http://gdata-samples.googlecode.com/svn/trunk/gadgets/blogger/ajax-loader.gif"></p>
+        </div>
+    
+        <div id="approval" style="display: none">
+          <a href="#" id="personalize">Allow access to Google Calendar</a>
+        </div>
+    
+        <div id="waiting" style="display: none">
+          <a href="#" id="approvalLink">I've approved access</a>
+        </div>
+        
+        <script type="text/javascript">
+          ( function ( $ ) {
+          var calendar = null;
+          
+          function initGadget() {
+            google.load( 'gdata', '2.x' );
+            google.setOnLoadCallback( function () {
+              calendar = new google.gdata.calendar.CalendarService( 'goocal-print' );
+              calendar.useOAuth( 'google' );
+              fetchData();
+            } );
+            
+            $( '.generate' ).click( function ( e ) {
+              e.preventDefault();
+              
+              var form = $( 'form' );
+              var sd = $( '#startdate' ).val();
+              var ed = $( '#enddate' ).val();
+              var calendars = $( 'input[name=src]:checked' ).length;
+                            
+              if ( !sd || !ed || !calendars ) {
+                $( '.urls' ).hide();
+                $( '.error' ).show( 'slow' );
+              }
+              
+              var url = form.attr( 'action' ) + '?' + form.serialize();
+              url += '&' + $.param( {
+                dates: sd + '/' + ed,
+                rand: new Date().getTime()
+              } );
+              
+              $( '.error' ).hide();
+              $( '.urls' ).show( 'slow' );
+              $( '.url-link' ).attr( 'href', url );
+              $( '.url-input' ).val( url );
+              
+              return false;
+            } );
+          }
+          
+          function showOnly ( id ) {
+            var sections = ['main', 'approval', 'waiting', 'loading', 'errors'];
+            for (var i = 0, section; section = sections[i]; ++i) {
+              $( '#' + section).get(0).style.display = section === id ? 'block' : 'none';
+            }
+          }
+          
+          function fetchData () {
+            $( '#errors' ).hide();
+            
+            var callback = function (response) {
+              if (response.oauthApprovalUrl) {
+                var popup = shindig.oauth.popup({
+                  destination: response.oauthApprovalUrl,
+                  windowOptions: 'height=600,width=800',
+                  onOpen: function () {
+                    showOnly( 'waiting' );
+                  },
+                  onClose: function () {
+                    showOnly( 'loading' );
+                    fetchData();
+                  }
+                });
+                $( '#personalize' ).get(0).onclick = popup.createOpenerOnClick();
+                $( '#approvalLink' ).get(0).onclick = popup.createApprovedOnClick();
+                
+                showOnly( 'approval' );
+              } else if ( response.feed ) {
+                showResults( response );
+                showOnly( 'main' );
+              } else {
+                if ( console && console.debug ) {
+                  console.debug( response.stack );
+                }
+                $( '#errors' ).html( 'Something went wrong' ).fadeIn();
+                showOnly( 'errors' );
+              }
+            };
+            
+            calendar.getAllCalendarsFeed( 'http://www.google.com/calendar/feeds/default/allcalendars/full', callback, callback);
+          }
+          
+          function showResults ( feedRoot ) {   
+            var feed = feedRoot.feed;
+            var entries = feed.entry
+              && feed.entry.length ? feed.entry : [];
+            
+            $( 'ul.calendars' ).empty();
+
+            $.each( entries, function () {
+              var id = unescape( this.id.$t.substring(
+                this.id.$t.lastIndexOf( '/' ) + 1
+              ) );
+              
+              var li = $( '<li />' )
+                .append(
+                  $( '<input type="checkbox" />' ).attr( {
+                    name: 'src',
+                    value: id,
+                    id: 'cb_' + id,
+                    checked: 'checked'
+                  } ) )
+                .append(
+                  $( '<label />' )
+                    .attr( 'for', 'cb_' + id )
+                    .html( this.title.$t )
+                );
+              $( 'ul.calendars' ).append( li );
+            } );
+          }
+          
+          gadgets.util.registerOnLoadHandler( initGadget );
+          } )( jQuery );
+        </script>
+      </body>
+    </html>
+  ]]> 
+  </Content>
+</Module>
