@@ -106,15 +106,17 @@
                 </select>
               </div>
               
-              <button class="generate">Generate URL</button>
-              <p class="error" style="display:none">
-                Please make sure you fill in the start and end date, and select at least one calendar.
-              </p>
-              <div class="urls" style="display:none">
-                <input type="text" class="url-input" readonly="readonly" />
-                <a class="url-link" href="#" target="_blank">Click to open</a>
-              </div>
+              <input type="hidden" name="ctz" />
             </form>
+            
+            <button class="generate">Generate URL</button>
+            <p class="error" style="display:none">
+              Please make sure you fill in the start and end date, and select at least one calendar.
+            </p>
+            <div class="urls" style="display:none">
+              <input type="text" class="url-input" readonly="readonly" />
+              <a class="url-link" href="#" target="_blank">Click to open</a>
+            </div>
           </div>
         </div>
         
@@ -199,8 +201,11 @@
                 
                 showOnly( 'approval' );
               } else if ( response.feed ) {
-                showResults( response );
-                showOnly( 'main' );
+                calendar.getSettingsEntry( 'http://www.google.com/calendar/feeds/default/settings/' + google.gdata.calendar.SettingsProperty.NAME_TIMEZONE,
+                  function ( r ) {
+                    showResults( response, r.entry.getSettingsProperty().getValue() );
+                    showOnly( 'main' );
+                  }, function () { console.dir(arguments); } );
               } else {
                 if ( console && console.debug ) {
                   console.debug( response.stack );
@@ -209,11 +214,11 @@
                 showOnly( 'errors' );
               }
             };
-            
+
             calendar.getAllCalendarsFeed( 'http://www.google.com/calendar/feeds/default/allcalendars/full', callback, callback);
           }
           
-          function showResults ( feedRoot ) {   
+          function showResults ( feedRoot, timezone ) {
             var feed = feedRoot.feed;
             var entries = feed.entry
               && feed.entry.length ? feed.entry : [];
@@ -240,6 +245,8 @@
                 );
               $( 'ul.calendars' ).append( li );
             } );
+            
+            $( 'input[name=ctz]' ).val( timezone );
           }
           
           gadgets.util.registerOnLoadHandler( initGadget );
